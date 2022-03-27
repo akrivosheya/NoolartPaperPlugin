@@ -11,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -85,12 +86,18 @@ public class NoolartPaperPlugin extends JavaPlugin {
         try(Scanner scan = new Scanner(shopFile)) {
             while (scan.hasNextLine() && i < 54) {
                 String[] current = scan.nextLine().split(":");
-                shopPrices.put(current[0].toUpperCase(), Integer.parseInt(current[1]));
+
                 ItemStack itemStack = new ItemStack((Material.valueOf((current[0]).toUpperCase())));
-                ItemMeta itemMeta = itemStack.getItemMeta();
-                itemMeta.setDisplayName(ChatColor.YELLOW + Materials.getString(itemStack.getType().toString().toLowerCase(), "name"));
-                itemMeta.setLore(Arrays.asList(ChatColor.GREEN + "ПКМ " + ChatColor.WHITE + "Купить:" + current[1] + "$", ChatColor.RED + "ЛКМ " + ChatColor.WHITE + "Продать:" + (int) (Integer.parseInt(current[1]) * 0.8) + "$"));
-                itemStack.setItemMeta(itemMeta);
+                if(itemStack.getType() != Material.RED_STAINED_GLASS_PANE) {
+                    shopPrices.put(current[0].toUpperCase(), Integer.parseInt(current[1]));
+                    ItemMeta itemMeta = itemStack.getItemMeta();
+                    itemMeta.setDisplayName(ChatColor.YELLOW + Materials.getString(itemStack.getType().toString().toLowerCase(), "name"));
+                    itemMeta.setLore(Arrays.asList(ChatColor.GREEN + "ПКМ " + ChatColor.WHITE + "Купить:" + current[1] + "$", ChatColor.RED + "ЛКМ " + ChatColor.WHITE + "Продать:" + (int) (Integer.parseInt(current[1]) * 0.8) + "$"));
+                    if (i==53){
+                        itemMeta.addEnchant(Enchantment.MENDING,1,false);
+                    }
+                    itemStack.setItemMeta(itemMeta);
+                }
                 shop.setItem(i, itemStack);
                 i++;
             }

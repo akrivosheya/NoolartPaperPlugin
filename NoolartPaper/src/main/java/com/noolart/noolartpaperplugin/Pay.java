@@ -19,31 +19,35 @@ public class Pay implements CommandExecutor {
         this.plugin = noolartPaperPlugin;
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length!=1){
-            return false;
-        }
-
+    public static void giveMoneyToPlayer(int howmany, Player p){
         int balance;
-        Player p = Bukkit.getPlayer(sender.getName());
-        File balanceCheck = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator+"users"+File.separator  + sender.getName() +"_balance.csv");
+
+        File balanceCheck = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator+"users"+File.separator  + p.getName() +"_balance.csv");
 
         try {
             Scanner scan = new Scanner(balanceCheck);
             balance = Integer.parseInt(scan.nextLine());
-            balance+=Integer.parseInt(args[0]);
+            balance+=howmany;
 
-            p.sendMessage(ChatColor.GOLD+"Баланс пополнен на " +ChatColor.BOLD+ChatColor.LIGHT_PURPLE+args[0]+"$ "+ ChatColor.RESET+ ChatColor.GOLD+ "Ваш баланс: "+ ChatColor.BOLD+ChatColor.LIGHT_PURPLE +balance+"$");
+            p.sendMessage(ChatColor.GOLD+"Баланс пополнен на " +ChatColor.BOLD+ChatColor.LIGHT_PURPLE+howmany+"$ "+ ChatColor.RESET+ ChatColor.GOLD+ "Ваш баланс: "+ ChatColor.BOLD+ChatColor.LIGHT_PURPLE +balance+"$");
 
             scan.close();
 
-            FileWriter writer = new FileWriter(NoolartPaperPlugin.plugin.getDataFolder() + File.separator+"users"+File.separator  + sender.getName() +"_balance.csv", false);
+            FileWriter writer = new FileWriter(NoolartPaperPlugin.plugin.getDataFolder() + File.separator+"users"+File.separator  + p.getName() +"_balance.csv", false);
             writer.write(Integer.toString(balance));
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length!=1){
+            return false;
+        }
+        giveMoneyToPlayer(Integer.parseInt(args[0]),Bukkit.getPlayer(sender.getName()));
+
 
         return true;
     }

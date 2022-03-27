@@ -1,10 +1,7 @@
 package com.noolart.noolartpaperplugin.listener;
 
 import com.google.common.collect.Lists;
-import com.noolart.noolartpaperplugin.Materials;
-import com.noolart.noolartpaperplugin.NoolartPaperPlugin;
-import com.noolart.noolartpaperplugin.PictureDrawer;
-import com.noolart.noolartpaperplugin.Python;
+import com.noolart.noolartpaperplugin.*;
 import com.noolart.noolartpaperplugin.commands.Commands;
 import com.noolart.noolartpaperplugin.csv.PasteCsv;
 import net.md_5.bungee.api.ChatColor;
@@ -30,6 +27,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -378,6 +376,8 @@ public class MyListener implements Listener {
         Block block = blockPlaceEvent.getBlock();
         BlockState blockState = block.getState();
 
+
+
         if (block.getType() == Material.LECTERN) {
             if (blockState instanceof Lectern) {
                 Lectern l = (Lectern) blockState;
@@ -417,260 +417,312 @@ public class MyListener implements Listener {
         }
 
         if (block.getType() == Material.DARK_OAK_FENCE) {
-            NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 3, block.getLocation().getY(), block.getLocation().getZ() - 3);
-            PasteCsv.paste("OilRid", blockPlaceEvent.getPlayer());
 
-            NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 2, 1, block.getLocation().getZ() - 2);
-            double depth = block.getLocation().getY() - 1;
-            Location loc = new Location(blockPlaceEvent.getPlayer().getWorld(), NoolartPaperPlugin.point1.getX(), 1, NoolartPaperPlugin.point1.getZ());
 
-            for (int i = 0; i < depth; i++) {
-                loc.add(-1, 0, -1);
-            }
+            if (block.getLocation().add(0,-1,0).getBlock().getType()==Material.RED_CONCRETE) {
+                NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 3, block.getLocation().getY(), block.getLocation().getZ() - 3);
+                PasteCsv.paste("OilRid", blockPlaceEvent.getPlayer());
 
-            for (int i = 0; i < depth; i++) {
-                if (i == depth - 1) {
-                    PasteCsv.pasteQuiet("OilRidBottom1", blockPlaceEvent.getPlayer());
-                } else if (i % 10 == 0) {
-                    PasteCsv.pasteQuiet("OilRidBottom2", blockPlaceEvent.getPlayer());
-                } else if (i % 5 == 0 || i % 6 == 0) {
-                    PasteCsv.pasteQuiet("OilRidBottom3", blockPlaceEvent.getPlayer());
-                } else {
-                    PasteCsv.pasteQuiet("OilRidBottom", blockPlaceEvent.getPlayer());
+                NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 2, 1, block.getLocation().getZ() - 2);
+                double depth = block.getLocation().getY() - 1;
+                Location loc = new Location(blockPlaceEvent.getPlayer().getWorld(), NoolartPaperPlugin.point1.getX(), 1, NoolartPaperPlugin.point1.getZ());
+
+                for (int i = 0; i < depth; i++) {
+                    loc.add(-1, 0, -1);
                 }
-                NoolartPaperPlugin.point1.setY(NoolartPaperPlugin.point1.getY() + 1);
+
+                for (int i = 0; i < depth; i++) {
+                    if (i == depth - 1) {
+                        PasteCsv.pasteQuiet("OilRidBottom1", blockPlaceEvent.getPlayer());
+                    } else if (i % 10 == 0) {
+                        PasteCsv.pasteQuiet("OilRidBottom2", blockPlaceEvent.getPlayer());
+                    } else if (i % 5 == 0 || i % 6 == 0) {
+                        PasteCsv.pasteQuiet("OilRidBottom3", blockPlaceEvent.getPlayer());
+                    } else {
+                        PasteCsv.pasteQuiet("OilRidBottom", blockPlaceEvent.getPlayer());
+                    }
+                    NoolartPaperPlugin.point1.setY(NoolartPaperPlugin.point1.getY() + 1);
+                }
+
+                Player p = blockPlaceEvent.getPlayer();
+                int blocks = p.getStatistic(Statistic.USE_ITEM, Material.DARK_OAK_FENCE)+1;
+//                Bukkit.broadcastMessage("" + blocks);
+                int effectLevel = blocks/5*300;
+                if (blocks>0 && blocks%5==0){
+                    Pay.giveMoneyToPlayer(effectLevel,p);
+                    p.sendMessage("" + ChatColor.BOLD +ChatColor.GOLD+"Ты установил " + ChatColor.RESET + ChatColor.GREEN + blocks + ChatColor.BOLD +ChatColor.GOLD+" шахт!"+"\n"+"Ты получаешь " + ChatColor.RESET + ChatColor.AQUA + ChatColor.BOLD + effectLevel + "$" );
+                }
+            }
+            else{
+                blockPlaceEvent.setCancelled(true);
+                blockPlaceEvent.getPlayer().sendMessage(ChatColor.DARK_RED + "Шахту можно разместить только на специальной платформе");
             }
         }
 
 
         if (block.getType() == Material.IRON_BARS) {
-            blockPlaceEvent.getPlayer().sendMessage("wait...");
+            if (block.getLocation().add(0,-1,0).getBlock().getType()==Material.RED_CONCRETE) {
+                blockPlaceEvent.getPlayer().sendMessage("wait...");
 
-            File solidity = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Density.csv");
-            PrintWriter w1 = new PrintWriter(solidity);
-            w1.print("");
-            w1.close();
-            File magnetic = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Magnetic.csv");
-            PrintWriter w2 = new PrintWriter(magnetic);
-            w2.print("");
-            w2.close();
-            File resistivity = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Res.csv");
-            PrintWriter w3 = new PrintWriter(resistivity);
-            w3.print("");
-            w3.close();
-            File vpspeed = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Vp.csv");
-            PrintWriter w4 = new PrintWriter(vpspeed);
-            w4.print("");
-            w4.close();
-            File vsspeed = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Vs.csv");
-            PrintWriter w5 = new PrintWriter(vsspeed);
-            w5.print("");
-            w5.close();
-            File rad = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Rad.csv");
-            PrintWriter w6 = new PrintWriter(rad);
-            w6.print("");
-            w6.close();
-
-
-
-            NoolartPaperPlugin.point1 = block.getLocation().clone().add(-5, -1, -5);
-            PasteCsv.pasteQuiet("budka", blockPlaceEvent.getPlayer());
-            blockPlaceEvent.getBlock().getLocation().add(0, 1, -4).getBlock().setType(Material.CHEST);
+                File solidity = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Density.csv");
+                PrintWriter w1 = new PrintWriter(solidity);
+                w1.print("");
+                w1.close();
+                File magnetic = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Magnetic.csv");
+                PrintWriter w2 = new PrintWriter(magnetic);
+                w2.print("");
+                w2.close();
+                File resistivity = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Res.csv");
+                PrintWriter w3 = new PrintWriter(resistivity);
+                w3.print("");
+                w3.close();
+                File vpspeed = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Vp.csv");
+                PrintWriter w4 = new PrintWriter(vpspeed);
+                w4.print("");
+                w4.close();
+                File vsspeed = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Vs.csv");
+                PrintWriter w5 = new PrintWriter(vsspeed);
+                w5.print("");
+                w5.close();
+                File rad = new File(NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "res" + File.separator + "Rad.csv");
+                PrintWriter w6 = new PrintWriter(rad);
+                w6.print("");
+                w6.close();
 
 
-            Chest chest = (Chest) blockPlaceEvent.getBlock().getLocation().add(0, 1, -4).getBlock().getState();
-            List<ItemStack> kern = new ArrayList();
+                NoolartPaperPlugin.point1 = block.getLocation().clone().add(-5, -1, -5);
+                PasteCsv.pasteQuiet("budka", blockPlaceEvent.getPlayer());
+                blockPlaceEvent.getBlock().getLocation().add(0, 1, -4).getBlock().setType(Material.CHEST);
 
-            Player p = blockPlaceEvent.getPlayer();
-            World w = p.getWorld();
 
-            NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 2, 1, block.getLocation().getZ() - 2);
-            double depth = block.getLocation().getY() - 1;
-            Location loc = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getX(), 1, block.getZ());
+                Chest chest = (Chest) blockPlaceEvent.getBlock().getLocation().add(0, 1, -4).getBlock().getState();
+                List<ItemStack> kern = new ArrayList();
 
-            for (int i = 0; i < depth - 1; i++) {
-                try (FileWriter writer = new FileWriter(solidity.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Density") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (FileWriter writer = new FileWriter(magnetic.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Magnetic") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (FileWriter writer = new FileWriter(resistivity.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Res") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (FileWriter writer = new FileWriter(vsspeed.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Vs") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (FileWriter writer = new FileWriter(vpspeed.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Vp") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (FileWriter writer = new FileWriter(rad.getPath(), true)) {
-                    writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Rad") + ";");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Player p = blockPlaceEvent.getPlayer();
+                World w = p.getWorld();
 
-                if (loc.getBlock().getType() != Material.CAVE_AIR && loc.getBlock().getType() != Material.AIR && loc.getBlock().getType() != Material.BEDROCK && loc.getBlock().getType() != Material.LAVA && loc.getBlock().getType() != Material.WATER) {
+                NoolartPaperPlugin.point1 = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getLocation().getX() - 2, 1, block.getLocation().getZ() - 2);
+                double depth = block.getLocation().getY() - 1;
+                Location loc = new Location(blockPlaceEvent.getPlayer().getWorld(), block.getX(), 1, block.getZ());
+
+                for (int i = 0; i < depth - 1; i++) {
+                    try (FileWriter writer = new FileWriter(solidity.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Density") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try (FileWriter writer = new FileWriter(magnetic.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Magnetic") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try (FileWriter writer = new FileWriter(resistivity.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Res") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try (FileWriter writer = new FileWriter(vsspeed.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Vs") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try (FileWriter writer = new FileWriter(vpspeed.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Vp") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try (FileWriter writer = new FileWriter(rad.getPath(), true)) {
+                        writer.write(Materials.getLong(loc.getBlock().getType().toString().toLowerCase(), "Rad") + ";");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (loc.getBlock().getType() != Material.CAVE_AIR && loc.getBlock().getType() != Material.AIR && loc.getBlock().getType() != Material.BEDROCK && loc.getBlock().getType() != Material.LAVA && loc.getBlock().getType() != Material.WATER) {
 //                    if (loc.getBlock().getType()==)
-                    kern.add(new ItemStack(loc.getBlock().getType()));
+                        kern.add(new ItemStack(loc.getBlock().getType()));
+                    }
+                    loc.add(0, 1, 0);
+                    //Bukkit.broadcastMessage(Double.toString(loc.getX())+" "+ Double.toString(loc.getY())+" "+Double.toString(loc.getZ())+Materials);
                 }
-                loc.add(0, 1, 0);
-                //Bukkit.broadcastMessage(Double.toString(loc.getX())+" "+ Double.toString(loc.getY())+" "+Double.toString(loc.getZ())+Materials);
-            }
 
-            NoolartPaperPlugin.point1 = new Location(w, block.getLocation().getX(), block.getLocation().getY() + 2, block.getLocation().getZ());
+                NoolartPaperPlugin.point1 = new Location(w, block.getLocation().getX(), block.getLocation().getY() + 2, block.getLocation().getZ());
 
-            for (int i = (int) block.getLocation().getY() + 2; i > 0; i--) {
-                NoolartPaperPlugin.point1.getBlock().setType(Material.END_ROD);
-                NoolartPaperPlugin.point1.setY(NoolartPaperPlugin.point1.getY() - 1);
-            }
-
-            int currentSlot = 0;
-            kern = Lists.reverse(kern);
-
-            for (ItemStack item : kern) {
-                ItemMeta itemMeta = item.getItemMeta();
-                itemMeta.setDisplayName(ChatColor.YELLOW + Materials.getString(item.getType().toString().toLowerCase(), "name"));
-                item.setItemMeta(itemMeta);
-
-                if (currentSlot > 0 && chest.getInventory().getItem(currentSlot - 1).getType() == item.getType()) {
-                    int amount = chest.getInventory().getItem(currentSlot - 1).getAmount() + 1;
-                    item.setAmount(amount);
-                    chest.getInventory().setItem(currentSlot - 1, item);
-                } else {
-                    chest.getInventory().setItem(currentSlot, item);
-                    currentSlot++;
+                for (int i = (int) block.getLocation().getY() + 2; i > 0; i--) {
+                    NoolartPaperPlugin.point1.getBlock().setType(Material.END_ROD);
+                    NoolartPaperPlugin.point1.setY(NoolartPaperPlugin.point1.getY() - 1);
                 }
-            }
 
-            Commands.pythonrun("materials", Integer.toString(baseID));
-            Commands.pythonrun("img", Integer.toString(baseID));
+                int currentSlot = 0;
+                kern = Lists.reverse(kern);
 
-            int x = -4;
-            int y = 3;
-            int z = 3;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.EAST, false);
-                        itemFrame.setItem(mapToStack(baseID + "Density" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-                    });
-                    z--;
+                for (ItemStack item : kern) {
+                    ItemMeta itemMeta = item.getItemMeta();
+                    itemMeta.setDisplayName(ChatColor.YELLOW + Materials.getString(item.getType().toString().toLowerCase(), "name"));
+                    item.setItemMeta(itemMeta);
+
+                    if (currentSlot > 0 && chest.getInventory().getItem(currentSlot - 1).getType() == item.getType()) {
+                        int amount = chest.getInventory().getItem(currentSlot - 1).getAmount() + 1;
+                        item.setAmount(amount);
+                        chest.getInventory().setItem(currentSlot - 1, item);
+                    } else {
+                        chest.getInventory().setItem(currentSlot, item);
+                        currentSlot++;
+                    }
                 }
-                y--;
-                z = 3;
-            }
 
-            x = -4;
-            y = 3;
-            z = -1;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.EAST, false);
-                        itemFrame.setItem(mapToStack(baseID + "Magnetic" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-//                        Bukkit.broadcastMessage("magnetic"+"-"+(finalI)+"-"+ finalJ+".png");
-                    });
-                    z--;
+                Commands.pythonrun("materials", Integer.toString(baseID));
+                Commands.pythonrun("img", Integer.toString(baseID));
+
+                int x = -4;
+                int y = 3;
+                int z = 3;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.EAST, false);
+                            itemFrame.setItem(mapToStack(baseID + "Density" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+                        });
+                        z--;
+                    }
+                    y--;
+                    z = 3;
                 }
-                y--;
+
+                x = -4;
+                y = 3;
                 z = -1;
-            }
-
-            x = -3;
-            y = 3;
-            z = -4;
-
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.SOUTH, false);
-                        itemFrame.setItem(mapToStack(baseID + "Res" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-                    });
-                    x++;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.EAST, false);
+                            itemFrame.setItem(mapToStack(baseID + "Magnetic" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+//                        Bukkit.broadcastMessage("magnetic"+"-"+(finalI)+"-"+ finalJ+".png");
+                        });
+                        z--;
+                    }
+                    y--;
+                    z = -1;
                 }
-                y--;
+
                 x = -3;
-            }
+                y = 3;
+                z = -4;
 
-            x = 1;
-            y = 3;
-            z = -4;
-
-
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.SOUTH, false);
-                        itemFrame.setItem(mapToStack(baseID + "Vs" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-                    });
-                    x++;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.SOUTH, false);
+                            itemFrame.setItem(mapToStack(baseID + "Res" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+                        });
+                        x++;
+                    }
+                    y--;
+                    x = -3;
                 }
-                y--;
+
                 x = 1;
-            }
+                y = 3;
+                z = -4;
 
 
-            x = 4;
-            y = 3;
-            z = -3;
-
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.WEST, false);
-                        itemFrame.setItem(mapToStack(baseID + "Vp" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-                    });
-                    z++;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.SOUTH, false);
+                            itemFrame.setItem(mapToStack(baseID + "Vs" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+                        });
+                        x++;
+                    }
+                    y--;
+                    x = 1;
                 }
-                y--;
+
+
+                x = 4;
+                y = 3;
                 z = -3;
-            }
 
-            x = 4;
-            y = 3;
-            z = 1;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    int finalI = i;
-                    int finalJ = j;
-                    w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
-                        itemFrame.setFacingDirection(BlockFace.WEST, false);
-                        itemFrame.setItem(mapToStack(baseID + "Rad" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
-                    });
-                    z++;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.WEST, false);
+                            itemFrame.setItem(mapToStack(baseID + "Vp" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+                        });
+                        z++;
+                    }
+                    y--;
+                    z = -3;
                 }
-                y--;
-                z = 1;
-            }
 
-            baseID++;
+                x = 4;
+                y = 3;
+                z = 1;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        int finalI = i;
+                        int finalJ = j;
+                        w.spawn(new Location(w, block.getX() + x, block.getY() + y, block.getZ() + z), ItemFrame.class, itemFrame -> {
+                            itemFrame.setFacingDirection(BlockFace.WEST, false);
+                            itemFrame.setItem(mapToStack(baseID + "Rad" + "-" + (finalI) + "-" + finalJ + ".jpg", p.getWorld()));
+                        });
+                        z++;
+                    }
+                    y--;
+                    z = 1;
+                }
+
+                baseID++;
+            }
+            else{
+                blockPlaceEvent.setCancelled(true);
+                blockPlaceEvent.getPlayer().sendMessage(ChatColor.DARK_RED + "Скважину можно разместить только на специальной платформе!");
+            }
 
         }
 
         if (blockPlaceEvent.getBlock().getType() == Material.RED_CONCRETE) {
-            NoolartPaperPlugin.point1 = blockPlaceEvent.getBlock().getLocation().add(-4, 0, -4);
-            PasteCsv.pasteQuiet("9x9place", blockPlaceEvent.getPlayer());
+           boolean flag = true;
+            Location l = block.getLocation().add(-5,0,-5);
+            for (int i = 0; i < 6; i++) {
+                for (int j = 0; j < 10; j++) {
+                    for (int k = 0; k < 10; k++) {
+                        l.add(0,0,1);
+                        //Bukkit.broadcastMessage(l.getBlock().getType().toString() + " "+l.getX()+" " + l.getZ());
+
+                        if (l.getBlock().getType()!=Material.AIR && l.getBlock().getType()!=Material.RED_CONCRETE){
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (!flag){
+                        break;
+                    }
+                    l.add(1,0,-10);
+                }
+                if (!flag){
+                    break;
+                }
+                l.add(-10,1,0);
+
+            }
+            if(flag) {
+                NoolartPaperPlugin.point1 = blockPlaceEvent.getBlock().getLocation().add(-5, 0, -5);
+                PasteCsv.pasteQuiet("11x11place", blockPlaceEvent.getPlayer());
+            }
+            else {
+                blockPlaceEvent.setCancelled(true);
+                blockPlaceEvent.getPlayer().sendMessage(ChatColor.DARK_RED + "Для установки платформы необходима свободная зона 11x6x11");
+            }
         }
 
         if(block.getType() == Material.SPONGE) {
@@ -688,6 +740,11 @@ public class MyListener implements Listener {
 
         }
     }
+
+
+
+
+
 
     @EventHandler
     public void inventoryClick(InventoryClickEvent inventoryClickEvent) throws IOException {
@@ -952,6 +1009,18 @@ public class MyListener implements Listener {
         Block b = e2.getBlock();
 
         String path = NoolartPaperPlugin.plugin.getDataFolder() + File.separator + "observers.csv";
+
+        if (b.getType()==Material.COBBLESTONE){
+            Player p = e2.getPlayer();
+            int cobblesPickedUp = p.getStatistic(Statistic.MINE_BLOCK, Material.COBBLESTONE);
+
+            int len = Integer.toString(cobblesPickedUp).length();
+            int effectLevel = len - 2;
+            if (cobblesPickedUp/(Math.pow(10,len-1))==1){
+                p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING,1000000,effectLevel-1));
+                p.sendMessage("" + ChatColor.BOLD +ChatColor.GOLD+"Ты откопал " + ChatColor.RESET + ChatColor.GREEN + cobblesPickedUp + ChatColor.BOLD +ChatColor.GOLD+" блоков булыжника!"+"\n"+"Теперь на тебя наложен эффект "+ChatColor.RESET + ChatColor.BOLD + ChatColor.GREEN + "СПЕШКИ "+ChatColor.RESET + ChatColor.BOLD + ChatColor.AQUA +effectLevel +ChatColor.RESET + ChatColor.BOLD + ChatColor.GOLD+" уровня!" );
+            }
+        }
 
         if (b.getType() == Material.OBSERVER) {
 
