@@ -1,44 +1,63 @@
 package breaker;
 
 import org.bukkit.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class DamageData{
 	DamageData(Location location, float damageSpeed, float damageCoefficient){
-		this.location = location;
 		if(damageSpeed <= NO_DAMAGE) {
+			System.err.println("For location " + location + " damageSpeed was " + damageSpeed + " <= 0");
 			damageSpeed = DEFAULT_DAMAGE_SPEED;
 		}
-		this.damageSpeed = damageSpeed;
+		if(location != null) {
+			locationsData.put(location.toString(), new LocationDamage(location.toString(), damageSpeed));
+		}
 		if(damageCoefficient <= NO_DAMAGE) {
 			damageCoefficient = DEFAULT_DAMAGE_COEFFICIENT;
 		}
 		this.damageCoefficient = damageCoefficient;
 	}
 	
-	public Location getLocation(){
-		return location;
-	}
-	
-	public float getDamage(){
-		return damage;
-	}
-	
-	public void setLocation(Location location){
-		this.location = location;
-	}
-	
-	public void clearDamage(){
-		this.damage = NO_DAMAGE;
-	}
-	
-	public void setDamageSpeed(float damageSpeed){
-		if(damageSpeed <= NO_DAMAGE) {
-			damageSpeed = DEFAULT_DAMAGE_SPEED;
+	public boolean containsLocation(String locationName) {
+		if(locationName == null) {
+			return false;
 		}
-		this.damageSpeed = damageSpeed;
+		return locationsData.containsKey(locationName);
 	}
 	
-	public void increaseDamage(float extraDamageCoefficient) {
+	public float getDamage(String locationName){
+		return locationsData.get(locationName).getDamage();
+	}
+	
+	public void putLocation(Location location, float damageSpeed){
+		if(location != null) {
+			String locationName = location.toString();
+			if(locationsData.size() >= MAX_SIZE_LOCATIONS && !locationsData.containsKey(locationName)) {
+				String locationToRemove = (String)(locationsData.keySet().toArray()[0]);
+				locationsData.remove(locationToRemove);
+			}
+			if(damageSpeed <= NO_DAMAGE) {
+				System.err.println("For location " + location + " damageSpeed was " + damageSpeed + " <= 0");
+				damageSpeed = DEFAULT_DAMAGE_SPEED;
+			}
+			locationsData.put(locationName, new LocationDamage(location.toString(), damageSpeed));
+		}
+	}
+	
+	public void removeLocation(String locationName) {
+		if(locationName != null && locationsData.containsKey(locationName)) {
+			locationsData.get(locationName).stopTimer();
+			locationsData.remove(locationName);
+		}
+	}
+	
+	public void increaseDamage(String locationName, float extraDamageCoefficient) {
+		if(locationName == null || !locationsData.containsKey(locationName)) {
+			return;
+		}
+		float damage = locationsData.get(locationName).getDamage();
+		float damageSpeed = locationsData.get(locationName).getDamageSpeed();
 		if(damage == FULL_DAMAGE) {
 			return;
 		}
@@ -49,6 +68,7 @@ public class DamageData{
 		if(damage > FULL_DAMAGE) {
 			damage = FULL_DAMAGE;
 		}
+		locationsData.get(locationName).setDamage(damage);
 	}
 	
 	public void setDamageCoefficient(float damageCoefficient){
@@ -62,9 +82,8 @@ public class DamageData{
 	private float FULL_DAMAGE = 1.0f;
 	private float DEFAULT_DAMAGE_COEFFICIENT = 1.0f;
 	private float DEFAULT_DAMAGE_SPEED = 0.05F;
+	private int MAX_SIZE_LOCATIONS = 10;
 	
-	private Location location;
-	private float damage = NO_DAMAGE;
-	private float damageSpeed;
+	private Map<String, LocationDamage> locationsData = new ConcurrentHashMap<String, LocationDamage>();
 	private float damageCoefficient;
 }

@@ -83,9 +83,9 @@ public class BreakerListener implements Listener {
 		    	event.setCancelled(true);
 	    	}
 		}
-		else {
+		/*else {
 			damageMaster.setDefaultMode(player);
-		}
+		}*/
 		updatePlayers(player.getName());
     }
     

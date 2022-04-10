@@ -21,30 +21,16 @@ public class DamageMaster{
 	public void clear() {
 		damages.clear();
 		threadpools.clear();
+		timers.clear();
 	}
 	
 	public void removePlayer(String playerName) {
 		if(playerName == null) {
 			return;
 		}
-		if(damages.containsKey(playerName)) {
-			DamageData damage = damages.get(playerName);
-			Location location = damage.getLocation();
-			if(location != null) {
-				Player player = Bukkit.getPlayer(playerName);
-				if(player != null) {
-					player.sendBlockDamage(location, 0.0f);
-				}
-			}
-			damages.remove(playerName);
-		}
+		damages.remove(playerName);
 		threadpools.remove(playerName);
-	}
-	
-	public void setDefaultMode(Player player) {
-		if(damages.containsKey(player.getName())) {
-			damages.get(player.getName()).setLocation(null);
-		}
+		timers.remove(playerName);
 	}
 	
 	public boolean initDamage(Player player, Block block, ItemStack item) {
@@ -78,12 +64,9 @@ public class DamageMaster{
 		}
 	    else {
 	    	damageData = damages.get(player.getName());
-	   		Location oldLocation = damageData.getLocation();
-		   	if(oldLocation == null || !sameLocations(oldLocation, newLocation)) {
-		   		damageData.setLocation(newLocation);
-				damageData.setDamageSpeed(damageSpeed);
-		    	damageData.clearDamage();
-		    }
+	    	if(!damageData.containsLocation(newLocation.toString())) {
+	    		damageData.putLocation(newLocation, damageSpeed);
+	    	}
 		    damageData.setDamageCoefficient(damageCoefficient);
 	    }
 		return true;
@@ -96,38 +79,22 @@ public class DamageMaster{
 		else if(damages.containsKey(player.getName())) {
 			String playerName = player.getName();
 			DamageData damageData = damages.get(playerName);
-			Location location = damageData.getLocation();
 			Block block = player.getTargetBlock(DAMAGE_LENGTH);
-   			if(location != null) {
-   				String locationName = location.toString();
+			Location location = block.getLocation();
+			String locationName = location.toString();
+   			if(damageData.containsLocation(locationName)) {
    				synchronized(locationName) {
-		    		if(!location.getBlock().getBlockData().getMaterial().equals(Material.AIR) && 
-		    				sameLocations(location, block.getLocation())) {
-				    	if(damageData.getDamage() == FULL_DAMAGE) {
+		    		if(!location.getBlock().getBlockData().getMaterial().equals(Material.AIR)) {
+				    	if(damageData.getDamage(locationName) == FULL_DAMAGE) {
 				    		String blockType = block.getType().toString().toLowerCase();
 				    		block.breakNaturally();
 				    		dropLoot(blockType, location, block.getWorld());
-			    			damageData.setLocation(null);
+			    			damageData.removeLocation(locationName);
 			    			return;
 				   		}
-				   		location.getBlock().setType(block.getBlockData().getMaterial());
-				   		player.sendBlockDamage(location, damageData.getDamage());
-				   		damageData.increaseDamage(getExtraDamageCoefficient(player, location));
-				   		float currentDamage = damageData.getDamage();
-				   		if(!threadpools.containsKey(playerName)) {
-				   			threadpools.put(playerName, new ScheduledThreadPoolExecutor(1));
-				   		}
-				   		threadpools.get(playerName).execute(()->{
-				   			if(currentDamage >= damageData.getDamage()) {
-					   			try {
-					   				Thread.sleep(WAITING_TIME_MILLIS);
-					   			}
-					   			catch(InterruptedException e) {
-					   				System.err.println("Problem with sending damage thread: " + e.getMessage());
-					   			}
-						   		player.sendBlockDamage(location, damageData.getDamage());
-				   			}
-				   		});
+				   		block.setType(block.getBlockData().getMaterial());
+				   		player.sendBlockDamage(location, damageData.getDamage(locationName));
+				   		damageData.increaseDamage(locationName, getExtraDamageCoefficient(player, location));
 		   			}
    				}
    			}
@@ -162,15 +129,6 @@ public class DamageMaster{
 			}
 		}
 	}
-    
-    private boolean sameLocations(Location locationA, Location locationB) {
-    	if(locationA == null || locationB == null) {
-    		return locationA == locationB;
-    	}
-    	return locationA.getX() == locationB.getX() && 
-    			locationA.getY() == locationB.getY() && 
-    			locationA.getZ() == locationB.getZ();
-    }
     
     private float getDamageSpeed(long density) {
     	return (MAX_DENSITY - density) / MAX_DENSITY / DAMAGE_SPEED_COEFFICIENT;
@@ -221,11 +179,11 @@ public class DamageMaster{
     private float DEFAULT_DAMAGE_COEFFICIENT = 1.0F;
     private float MAX_EXTRA_DAMAGE_COEFFICIENT = 1.5F;
     private float MIN_EXTRA_DAMAGE_COEFFICIENT = 0.5F;
-    private long WAITING_TIME_MILLIS = 100;
     private long DEFAULT_DENSITY = 10000;
     
     private Map<String, Executor> threadpools = new ConcurrentHashMap<String, Executor>();
+    private Map<String, Timer> timers = new ConcurrentHashMap<String, Timer>();
+    private Map<String, DamageData> damages = new ConcurrentHashMap<String, DamageData>();
     private FileConfiguration instruments;
     private FileConfiguration materials;
-    private Map<String, DamageData> damages = new ConcurrentHashMap<String, DamageData>();
 }
